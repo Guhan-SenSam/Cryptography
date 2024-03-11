@@ -1,27 +1,27 @@
 import socket
 import secrets
 
-P = 225
-G = 14
+P = 157
+alpha = 5
 
 def receiver():
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(("localhost", 5200))
 
-        b = secrets.randbelow(P - 1)  # Receiver's private key
-        B = pow(G, b, P)  # Receiver's public key
-
-        print("Sending public key B:", B)
-
-        # Receive sender's public key (A)
-        A_bytes = s.recv(2048)  # Adjust buffer size based on p's bit length
-        A = int.from_bytes(A_bytes, byteorder='big')
-
-        # Send public key (g^b) to sender
-        s.sendall(B.to_bytes((P.bit_length() + 7) // 8, byteorder='big'))
-
-        print("Alice's Fake generated public key: ", A)
+        privatekey = secrets.randbelow(P - 1)
+        publickey = pow(alpha, privatekey, P)
+        
+        print("Generated Public Key", publickey)
+        # sending public key to bob
+        s.sendall(str(publickey).encode())
+        alicepubkey = int(s.recv(1024).decode())
+        alice_secret_bob = pow(alicepubkey, privatekey, P)
+        print("Shared Secret with Alice", alice_secret_bob)
+        
+        # sending shared secret to bob
+        s.sendall(str(alice_secret_bob).encode())
+        
 
 
 if __name__ == '__main__':
