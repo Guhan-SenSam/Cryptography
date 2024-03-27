@@ -2,36 +2,34 @@ import socket
 import random
 import string
 import hashlib
+from sympy import isprime
 
-def is_prime(n):
-    """Check if a number is prime."""
-    if n <= 1:
-        return False
-    if n == 2:
-        return True
-    if n % 2 == 0:
-        return False
-    max_divisor = int(n ** 0.5) + 1
-    for d in range(3, max_divisor, 2):
-        if n % d == 0:
-            return False
-    return True
 
-def generate_random_prime(min_value, max_value):
-    """Generate a random prime number within a specified range."""
+
+def generate_random_prime():
+    """Generate a random prime number"""
+    candidate = 0
     while True:
-        candidate = random.randint(min_value, max_value)
-        if is_prime(candidate):
-            return candidate
+        candidate = random.getrandbits(24)
+        if isprime(candidate):
+            break
+    return candidate
+    
 
 def generate_public_values():
-    # generates public values
-    p = generate_random_prime(2,10000000)
-    q = generate_random_prime(2,10000000)
-    a = int( (p - 1) // q )
-    # generate value of h
-    h = random.randint(2, p-2)
-    g = pow(h, a, p)  
+    # generate p and q and also check if p-1 is divisible by q
+    p = generate_random_prime()
+    # find q such that p-1 is divisible by q and q is prime
+    q = generate_random_prime()
+    while (p-1) % q != 0:
+        q = generate_random_prime()
+    while True:
+        # generate value of h
+        a = int( (p - 1) // q )
+        h = random.randint(2, p-2)
+        g = pow(h, a, p)
+        if g != 1:
+            break 
     return (p,q,a,g)
 
 
@@ -74,10 +72,14 @@ if __name__ == "__main__":
     hash_value = find_hash(message, q)
     # sign the message
     signature = sign(q, p, g, private_key, hash_value)
+    print('Signature[r,s]: ', signature)
     data = message + "," + str(signature[0]) + "," + str(signature[1])
+    print('Data: ', data)
     # send the message and signature to the server
     s.sendall(data.encode('utf-8'))
     # modify the signature slightly
+    from time import sleep
+    sleep(2)
     signature = (signature[0]+ random.randint(1,1000), signature[1])
     print('Modified signature: ', signature)
     # try to verify the signature again
