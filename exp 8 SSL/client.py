@@ -8,7 +8,7 @@ context.load_verify_locations('server.crt')
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     with context.wrap_socket(sock, server_hostname=host) as ssock:
         ssock.connect((host, port))
-        message = "Hello from the client!"
+        message = "Hello this is being sent through ssl"
         ssock.sendall(message.encode())
         data = ssock.recv(1024)
         print("Received:", data.decode())
